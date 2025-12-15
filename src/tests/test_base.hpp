@@ -28,6 +28,24 @@ public:
 
     // Optional: percentage of pixels allowed to differ
     virtual double allowed_diff_percent() const { return 0.0; }
+
+    // Screen capture mode: if true, capture from root window at test_region()
+    // instead of capturing the test window. Used for multi-window tests.
+    virtual bool captures_screen() const { return false; }
+
+    // Region to capture when captures_screen() is true (x, y, w, h)
+    // The test is responsible for positioning windows within this region
+    virtual void screen_region(int& x, int& y, uint32_t& w, uint32_t& h) const {
+        x = 0; y = 0; w = width(); h = height();
+    }
+
+    // Self-verifying tests: tolerance() == -1 indicates the test verifies itself
+    // and doesn't use reference image comparison
+    virtual bool is_self_verifying() const { return tolerance() == -1; }
+
+    // For self-verifying tests: check if the test passed and why it failed
+    virtual bool test_passed() const { return false; }
+    virtual std::string failure_reason() const { return ""; }
 };
 
 // Factory function type for creating tests

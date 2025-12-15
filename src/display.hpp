@@ -37,6 +37,42 @@ public:
     void hide_window();
     bool has_window() const { return window_ != 0; }
 
+    // Window management operations
+    void raise_window();
+    void lower_window();
+    void move_window(int x, int y);
+    void resize_window(uint32_t width, uint32_t height);
+    void set_window_position(int x, int y, uint32_t width, uint32_t height);
+
+    // Multi-window support - create additional windows
+    ::Window create_child_window(uint32_t width, uint32_t height,
+                                  int x = 0, int y = 0,
+                                  const std::string& title = "x11bench child");
+    void destroy_child_window(::Window win);
+    void show_child_window(::Window win);
+    void hide_child_window(::Window win);
+    void raise_child_window(::Window win);
+    void lower_child_window(::Window win);
+    void move_child_window(::Window win, int x, int y);
+    GC create_gc_for_window(::Window win);
+
+    // Draw to specific window
+    void draw_rectangle_on(::Window win, GC gc, int x, int y,
+                           int width, int height, bool filled,
+                           uint8_t r, uint8_t g, uint8_t b);
+    void fill_window(::Window win, GC gc, uint8_t r, uint8_t g, uint8_t b);
+
+    // Capture specific window
+    XImage* capture_window_ximage(::Window win);
+
+    // Capture region of root window (screen capture)
+    XImage* capture_root_region(int x, int y, uint32_t width, uint32_t height);
+
+    // Root window access for absolute positioning
+    ::Window root_window() const;
+    uint32_t screen_width() const;
+    uint32_t screen_height() const;
+
     // Get window dimensions
     uint32_t window_width() const { return width_; }
     uint32_t window_height() const { return height_; }

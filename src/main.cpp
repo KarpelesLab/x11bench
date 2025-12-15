@@ -138,12 +138,12 @@ int main(int argc, char* argv[]) {
     std::cout << std::string(60, '=') << "\n\n";
 
     for (const auto& test_info : tests) {
-        if (!matches_filter(test_info.name, opts.filter)) {
+        auto test = test_info.factory();
+
+        if (!matches_filter(test->name(), opts.filter)) {
             skipped++;
             continue;
         }
-
-        auto test = test_info.factory();
         std::string ref_path = opts.reference_dir + "/" + test->name() + ".png";
 
         std::cout << std::left << std::setw(35) << test->name() << " ";
@@ -182,6 +182,18 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         display.sync(false);
+
+        // Self-verifying tests handle their own verification
+        if (test->is_self_verifying()) {
+            if (test->test_passed()) {
+                std::cout << COLOR_GREEN << "[PASS]" << COLOR_RESET << "\n";
+                passed++;
+            } else {
+                std::cout << COLOR_RED << "[FAIL]" << COLOR_RESET << " " << test->failure_reason() << "\n";
+                failed++;
+            }
+            continue;
+        }
 
         // Capture window content
         x11bench::Image captured;

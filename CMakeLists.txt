@@ -29,6 +29,7 @@ set(SOURCES
     src/tests/test_text.cpp
     src/tests/test_composite.cpp
     src/tests/test_advanced.cpp
+    src/tests/test_windows.cpp
 )
 
 # Create executable

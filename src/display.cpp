@@ -209,6 +209,167 @@ void Display::hide_window() {
     }
 }
 
+void Display::raise_window() {
+    if (display_ && window_) {
+        XRaiseWindow(display_, window_);
+    }
+}
+
+void Display::lower_window() {
+    if (display_ && window_) {
+        XLowerWindow(display_, window_);
+    }
+}
+
+void Display::move_window(int x, int y) {
+    if (display_ && window_) {
+        XMoveWindow(display_, window_, x, y);
+    }
+}
+
+void Display::resize_window(uint32_t width, uint32_t height) {
+    if (display_ && window_) {
+        XResizeWindow(display_, window_, width, height);
+        width_ = width;
+        height_ = height;
+    }
+}
+
+void Display::set_window_position(int x, int y, uint32_t width, uint32_t height) {
+    if (display_ && window_) {
+        XMoveResizeWindow(display_, window_, x, y, width, height);
+        width_ = width;
+        height_ = height;
+    }
+}
+
+::Window Display::create_child_window(uint32_t width, uint32_t height,
+                                       int x, int y,
+                                       const std::string& title) {
+    if (!display_) return 0;
+
+    XSetWindowAttributes attrs;
+    attrs.background_pixel = WhitePixel(display_, screen_);
+    attrs.border_pixel = BlackPixel(display_, screen_);
+    attrs.event_mask = ExposureMask | StructureNotifyMask;
+    attrs.colormap = colormap_;
+    attrs.override_redirect = False;
+
+    ::Window win = XCreateWindow(
+        display_,
+        RootWindow(display_, screen_),
+        x, y,
+        width, height,
+        0,
+        depth_,
+        InputOutput,
+        visual_,
+        CWBackPixel | CWBorderPixel | CWEventMask | CWColormap | CWOverrideRedirect,
+        &attrs
+    );
+
+    if (win) {
+        XStoreName(display_, win, title.c_str());
+    }
+
+    return win;
+}
+
+void Display::destroy_child_window(::Window win) {
+    if (display_ && win) {
+        XDestroyWindow(display_, win);
+    }
+}
+
+void Display::show_child_window(::Window win) {
+    if (display_ && win) {
+        XMapWindow(display_, win);
+    }
+}
+
+void Display::hide_child_window(::Window win) {
+    if (display_ && win) {
+        XUnmapWindow(display_, win);
+    }
+}
+
+void Display::raise_child_window(::Window win) {
+    if (display_ && win) {
+        XRaiseWindow(display_, win);
+    }
+}
+
+void Display::lower_child_window(::Window win) {
+    if (display_ && win) {
+        XLowerWindow(display_, win);
+    }
+}
+
+void Display::move_child_window(::Window win, int x, int y) {
+    if (display_ && win) {
+        XMoveWindow(display_, win, x, y);
+    }
+}
+
+GC Display::create_gc_for_window(::Window win) {
+    if (!display_ || !win) return nullptr;
+    return XCreateGC(display_, win, 0, nullptr);
+}
+
+void Display::draw_rectangle_on(::Window win, GC gc, int x, int y,
+                                 int w, int h, bool filled,
+                                 uint8_t r, uint8_t g, uint8_t b) {
+    if (!display_ || !win || !gc) return;
+    unsigned long pixel = alloc_color(r, g, b);
+    XSetForeground(display_, gc, pixel);
+    if (filled) {
+        XFillRectangle(display_, win, gc, x, y, w, h);
+    } else {
+        XDrawRectangle(display_, win, gc, x, y, w - 1, h - 1);
+    }
+}
+
+void Display::fill_window(::Window win, GC gc, uint8_t r, uint8_t g, uint8_t b) {
+    if (!display_ || !win || !gc) return;
+
+    XWindowAttributes attrs;
+    if (XGetWindowAttributes(display_, win, &attrs)) {
+        draw_rectangle_on(win, gc, 0, 0, attrs.width, attrs.height, true, r, g, b);
+    }
+}
+
+XImage* Display::capture_window_ximage(::Window win) {
+    if (!display_ || !win) return nullptr;
+
+    XWindowAttributes attrs;
+    if (!XGetWindowAttributes(display_, win, &attrs)) {
+        return nullptr;
+    }
+
+    return XGetImage(display_, win, 0, 0, attrs.width, attrs.height, AllPlanes, ZPixmap);
+}
+
+::Window Display::root_window() const {
+    if (!display_) return 0;
+    return RootWindow(display_, screen_);
+}
+
+uint32_t Display::screen_width() const {
+    if (!display_) return 0;
+    return DisplayWidth(display_, screen_);
+}
+
+uint32_t Display::screen_height() const {
+    if (!display_) return 0;
+    return DisplayHeight(display_, screen_);
+}
+
+XImage* Display::capture_root_region(int x, int y, uint32_t w, uint32_t h) {
+    if (!display_) return nullptr;
+    ::Window root = RootWindow(display_, screen_);
+    return XGetImage(display_, root, x, y, w, h, AllPlanes, ZPixmap);
+}
+
 void Display::set_foreground(uint8_t r, uint8_t g, uint8_t b) {
     if (!display_ || !gc_) return;
     unsigned long pixel = alloc_color(r, g, b);
