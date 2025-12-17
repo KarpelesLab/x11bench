@@ -25,7 +25,8 @@ public:
 
     // Fuzzy comparison with percentage tolerance (0.0 - 1.0)
     static CompareResult fuzzy_percent(const Image& img1, const Image& img2,
-                                        double max_diff_percent);
+                                        double max_diff_percent,
+                                        int tolerance = 0);
 
     // Generate a diff image (highlights differences in red)
     static Image generate_diff(const Image& img1, const Image& img2, int tolerance = 0);

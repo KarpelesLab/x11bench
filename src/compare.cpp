@@ -84,8 +84,8 @@ CompareResult Compare::fuzzy(const Image& img1, const Image& img2, int tolerance
 }
 
 CompareResult Compare::fuzzy_percent(const Image& img1, const Image& img2,
-                                      double max_diff_percent) {
-    CompareResult result = fuzzy(img1, img2, 255);  // Get full stats
+                                      double max_diff_percent, int tolerance) {
+    CompareResult result = fuzzy(img1, img2, tolerance);
 
     // Override match based on percentage threshold
     result.match = (result.difference_percent <= max_diff_percent);
@@ -95,6 +95,9 @@ CompareResult Compare::fuzzy_percent(const Image& img1, const Image& img2,
         oss << result.different_pixels << " pixels differ ("
             << std::fixed << result.difference_percent
             << "%) - within " << max_diff_percent << "% threshold";
+        if (tolerance > 0) {
+            oss << " and tolerance " << tolerance;
+        }
         result.message = oss.str();
     }
 

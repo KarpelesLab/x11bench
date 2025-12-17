@@ -26,7 +26,7 @@ public:
     // Tolerance for comparison (0 = exact match, higher = more fuzzy)
     virtual int tolerance() const { return 0; }
 
-    // Optional: percentage of pixels allowed to differ
+    // Optional: percentage (0-100) of pixels allowed to differ by more than tolerance()
     virtual double allowed_diff_percent() const { return 0.0; }
 
     // Screen capture mode: if true, capture from root window at test_region()

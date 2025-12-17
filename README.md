@@ -176,6 +176,9 @@ public:
     // Optional: comparison tolerance (default 0 = exact match)
     int tolerance() const override { return 0; }
 
+    // Optional: allow up to N% of pixels to exceed tolerance()
+    double allowed_diff_percent() const override { return 0.25; } // 0.25% budget
+
     void render(Display& display) override {
         // Draw your pattern using display methods
         display.set_foreground(255, 0, 0);
@@ -186,6 +189,11 @@ REGISTER_TEST(TestMyPattern)
 ```
 
 Run with `--regenerate` to create the reference image, then subsequent runs will compare against it.
+
+### Comparison semantics
+
+- `tolerance()` is the per-channel maximum difference before a pixel is counted as different.
+- `allowed_diff_percent()` is the percentage (0–100) of pixels that may exceed `tolerance()` while still passing. If set to `0`, the match must be perfect within the tolerance.
 
 ## Project Structure
 

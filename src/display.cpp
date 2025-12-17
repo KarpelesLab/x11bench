@@ -139,6 +139,12 @@ bool Display::create_window(uint32_t width, uint32_t height, const std::string& 
         return false;
     }
 
+    // Initialize GC with known defaults to avoid server-defined surprises
+    XSetForeground(display_, gc_, BlackPixel(display_, screen_));
+    XSetBackground(display_, gc_, WhitePixel(display_, screen_));
+    XSetFunction(display_, gc_, GXcopy);
+    XSetPlaneMask(display_, gc_, AllPlanes);
+
     // Initialize XRender for this window
     if (has_xrender_) {
         init_xrender();
@@ -455,6 +461,13 @@ void Display::sync(bool discard) {
     }
 }
 
+void Display::clear_window() {
+    if (display_ && window_) {
+        XClearWindow(display_, window_);
+        XSync(display_, False);
+    }
+}
+
 bool Display::wait_for_expose(int timeout_ms) {
     if (!display_ || !window_) return false;
 
@@ -515,7 +528,12 @@ unsigned long Display::alloc_color(uint8_t r, uint8_t g, uint8_t b) {
 // Advanced GC operations
 void Display::set_function(int function) {
     if (!display_ || !gc_) return;
+    // Sync pending operations before changing function - important for modes
+    // like GXxor that read from the destination
+    XSync(display_, False);
     XSetFunction(display_, gc_, function);
+    // Also sync after to ensure the function change is processed
+    XSync(display_, False);
 }
 
 void Display::set_background(uint8_t r, uint8_t g, uint8_t b) {

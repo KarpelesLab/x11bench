@@ -96,10 +96,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Sort tests by name for consistent ordering
+    // Sort tests by name, but put window tests (win_*) at the end
+    // Window tests create/destroy many windows which can cause compositor lag
     std::sort(tests.begin(), tests.end(),
               [](const x11bench::TestInfo& a, const x11bench::TestInfo& b) {
-                  return a.name < b.name;
+                  auto ta = a.factory();
+                  auto tb = b.factory();
+                  std::string na = ta->name();
+                  std::string nb = tb->name();
+                  bool a_is_win = na.substr(0, 4) == "win_";
+                  bool b_is_win = nb.substr(0, 4) == "win_";
+                  if (a_is_win != b_is_win) return b_is_win;  // non-win before win
+                  return na < nb;
               });
 
     // List tests if requested
@@ -166,6 +174,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Clear window to ensure it starts fresh
+        display.clear_window();
+
         // Render the test pattern
         test->render(display);
 
@@ -173,12 +184,9 @@ int main(int argc, char* argv[]) {
         display.flush();
         display.sync(false);
 
-        // Additional sync to ensure X server has fully processed rendering
-        // This is necessary because XSync only ensures commands are received,
-        // not that they have been fully rasterized
-        display.sync(false);
-
-        // Small delay for complex rendering operations to complete
+        // Delay to allow X server to fully rasterize the rendering.
+        // XSync only ensures commands are received, not that compositing/
+        // rasterization is complete.
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         display.sync(false);
@@ -231,7 +239,8 @@ int main(int argc, char* argv[]) {
             x11bench::CompareResult result;
             if (test->allowed_diff_percent() > 0) {
                 result = x11bench::Compare::fuzzy_percent(reference, captured,
-                                                          test->allowed_diff_percent());
+                                                          test->allowed_diff_percent(),
+                                                          test->tolerance());
             } else {
                 result = x11bench::Compare::fuzzy(reference, captured, test->tolerance());
             }

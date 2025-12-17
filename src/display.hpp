@@ -147,6 +147,7 @@ public:
     void sync(bool discard = false);
     bool wait_for_expose(int timeout_ms = 1000);
     void process_pending_events();
+    void clear_window();
 
     // Color allocation
     unsigned long alloc_color(uint8_t r, uint8_t g, uint8_t b);
